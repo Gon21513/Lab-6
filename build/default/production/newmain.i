@@ -2652,12 +2652,22 @@ extern __bank0 __bit __timeout;
 
 # 1 "C:\\Program Files\\Microchip\\xc8\\v2.40\\pic\\include\\c90\\stdint.h" 1 3
 # 25 "newmain.c" 2
-# 37 "newmain.c"
+# 36 "newmain.c"
 void __attribute__((picinterrupt(("")))) isr(void) {
     if (T0IF){
         PORTC++;
         TMR0 = 216;
         T0IF = 0 ;
+    }
+    if (ADIF) {
+        if (ADCON0bits.CHS == 0b0000) {
+            PORTD = ADRESH;
+            ADCON0bits.CHS = 0b0001;
+        } else if (ADCON0bits.CHS == 0b0001){
+            PORTB = ADRESH;
+            ADCON0bits.CHS = 0b0000;
+        }
+        ADIF = 0;
     }
 }
 
@@ -2669,10 +2679,11 @@ void main(void) {
 
     while(1) {
         ADCON0bits.GO = 1;
-        while (ADIF == 0);
-        int adc = ADRESH;
-        PORTD = (char)adc;
+
+
+
         _delay((unsigned long)((10)*(8000000/4000.0)));
+
 
     }
     return;
@@ -2682,9 +2693,14 @@ void main(void) {
 void setup (void){
     ANSEL = 0;
     ANSELH = 0;
+    TRISB = 0;
     TRISC = 0;
     TRISD = 0;
-    TRISB = 0;
+
+    PORTA = 0;
+    PORTB = 0;
+    PORTC = 0;
+    PORTD = 0;
 
     OSCCONbits.IRCF = 0b111 ;
     OSCCONbits.SCS = 1;
@@ -2701,13 +2717,16 @@ void setup (void){
 
     INTCONbits.T0IF = 0;
     INTCONbits.T0IE = 1;
+    INTCONbits.PEIE = 1;
+    PIE1bits.ADIE = 1;
+    PIR1bits.ADIF = 0;
     INTCONbits.GIE = 1;
 
 
-    ANSEL = 0b01;
-    TRISA = 0b01;
+    ANSEL = 0b11;
     ADCON0bits.ADCS = 0b10 ;
-    ADCON0bits.CHS = 0;
+    ADCON0bits.CHS = 0b0000;
+
     _delay((unsigned long)((1)*(8000000/4000.0)));
 
 
@@ -2715,5 +2734,6 @@ void setup (void){
     ADCON1bits.VCFG0 = 0;
     ADCON1bits.VCFG1 = 0;
     ADCON0bits.ADON = 1;
+    _delay((unsigned long)((100)*(8000000/4000000.0)));
     ADIF = 0 ;
 }

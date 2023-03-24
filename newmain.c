@@ -29,16 +29,25 @@
 
 
 
-//void read_analog_channel(void);
 
 
 /////////////////interupciones 
 
 void __interrupt() isr(void) {
-    if (T0IF){
-        PORTC++; //INCREMENTO DEL PORTD
+    if (T0IF){ //   CHEUQEA LA INTERRUPCION DEL TMR0
+        PORTC++; //INCREMENTO DEL PORTC
         TMR0 = 216; //VALOR DEL TMR0
-        T0IF = 0 ;
+        T0IF = 0 ; //LIMPIAR BANDERA
+    }
+    if (ADIF) { //CHEQUEA INTERUPCION DEL ADC
+        if (ADCON0bits.CHS == 0b0000) {// CANAL 0 AN0
+            PORTD = ADRESH;//MUEVE EL VALOR AL ADRESH
+            ADCON0bits.CHS = 0b0001;// CAMBIA A CANAL 1
+        } else if (ADCON0bits.CHS == 0b0001){//CHEQUEA SI EL CANAL ES 1
+            PORTB = ADRESH; // MUEVE EL VALOR DEL ADRESH AL PORTB
+            ADCON0bits.CHS = 0b0000;
+        }
+        ADIF = 0;
     }
 }
 
@@ -50,9 +59,9 @@ void main(void) {
 
     while(1) {
         ADCON0bits.GO = 1;/// incicia la conversacion analogia a dig
-        while (ADIF == 0);//espera que termine y revisa la bandera
-        int adc = ADRESH;//(ADRESH <<8) + ADRESL;
-        PORTD = (char)adc; //guarda el valor de 8 bits en resultado de adc en el portd
+        //while (ADIF == 0);//espera que termine y revisa la bandera
+        //int adc = ADRESH;//(ADRESH <<8) + ADRESL;
+       // PORTD = (char)adc; //guarda el valor de 8 bits en resultado de adc en el portd
         __delay_ms(10); // Espera 10ms
 
 
@@ -64,9 +73,14 @@ void main(void) {
 void setup (void){
     ANSEL = 0; 
     ANSELH = 0;
-    TRISC = 0;
-    TRISD = 0;
-    TRISB = 0;
+    TRISB  = 0; ///PORTB COMO SALIDA
+    TRISC = 0; //PORTC COMO SALIDA
+    TRISD = 0; // PORTD COMO SALIDA
+    
+    PORTA = 0;
+    PORTB = 0;
+    PORTC = 0;
+    PORTD = 0;
         //////////////oscilador
     OSCCONbits.IRCF = 0b111 ; ///8Mhz
     OSCCONbits.SCS = 1;
@@ -83,13 +97,16 @@ void setup (void){
     /////////Banderas e interrupciones
     INTCONbits.T0IF = 0; //interrupcion del tmr0
     INTCONbits.T0IE = 1;///interrupcion del tmr0
+    INTCONbits.PEIE = 1; // habilitar interrupciones perifericas
+    PIE1bits.ADIE = 1; // habilitar interrupciones de ADC
+    PIR1bits.ADIF = 0; // limpiar la bandera de interrupcion del ADC
     INTCONbits.GIE = 1; //globales
     
     ////CONFIGURACION DE ADC
-    ANSEL = 0b01;
-    TRISA = 0b01;
+    ANSEL = 0b11; //configura an0 y an1 como analogicas
     ADCON0bits.ADCS = 0b10 ; ///fosc/32 
-    ADCON0bits.CHS = 0; ///chs 0000 an0 selecciona canal
+    ADCON0bits.CHS = 0b0000; ///chs 0000 an0 selecciona canal
+    //ADCON0bits.CHS = 0001///chs 0001 an0 selecciona canal
     __delay_ms(1); 
     
     ///////CONFIGURACIN DEL ADC
@@ -97,5 +114,6 @@ void setup (void){
     ADCON1bits.VCFG0 = 0; //vdd como referenias
     ADCON1bits.VCFG1 = 0; //vss como referencias
     ADCON0bits.ADON = 1; //inicial el adc
+    __delay_us(100);
     ADIF = 0 ; //LIMPIAR LA BANDERA
 }
