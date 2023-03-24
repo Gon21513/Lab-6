@@ -28,45 +28,45 @@
 #define _XTAL_FREQ 8000000
 
 
-////////////prototipos
-void setup (void);
+
+//void read_analog_channel(void);
+
 
 /////////////////interupciones 
 
-void __interrupt() ISR() {
-    if (PIR1bits.ADIF) { // Interrupción del ADC
-        PORTD = ADRESH; // Muestra los 8 bits superiores en el puerto D
-        PIR1bits.ADIF = 0; // Limpia la bandera de interrupción del ADC
-    }
-
-    if (INTCONbits.T0IF) { // Interrupción del TMR0
-        // Aquí puedes agregar código para ejecutar en cada interrupción del TMR0
-        INTCONbits.T0IF = 0; // Limpia la bandera de interrupción del TMR0
-        TMR0 = 216; ///VALOR INICIAL DEL TMR0
+void __interrupt() isr(void) {
+    if (T0IF){
+        PORTC++; //INCREMENTO DEL PORTD
+        TMR0 = 216; //VALOR DEL TMR0
+        T0IF = 0 ;
     }
 }
 
+////////////prototipos
+void setup (void);
 ////////////////////principal
 void main(void) {
-    setup();
+    setup();// llama  a la funcion setup
 
     while(1) {
-        __delay_ms(50); // Espera 50ms
-        ADCON0bits.GO = 1; // Inicia la conversión ADC
+        ADCON0bits.GO = 1;/// incicia la conversacion analogia a dig
+        while (ADIF == 0);//espera que termine y revisa la bandera
+        int adc = ADRESH;//(ADRESH <<8) + ADRESL;
+        PORTD = (char)adc; //guarda el valor de 8 bits en resultado de adc en el portd
+        __delay_ms(10); // Espera 10ms
+
+
     }
+    return;
 }
 
 /////////////CONFIGURACION 
 void setup (void){
-    ANSEL = 0B00000011; //CONFIGURAR A AN0 Y AN1 COMO ENTRADAS ANALOGIVCAS
-    ANSELH = 0; 
-    
-    TRISD = 0 ; ///PORTD COMO SALIDA
-    PORTD = 0; //SE INICIA EL PORTD
-    
-    TRISA = 0B00000011;  //RA0 Y RA1 COMO ENTRADAS
-    PORTA = 0; //INICIA PORTA
-    
+    ANSEL = 0; 
+    ANSELH = 0;
+    TRISC = 0;
+    TRISD = 0;
+    TRISB = 0;
         //////////////oscilador
     OSCCONbits.IRCF = 0b111 ; ///8Mhz
     OSCCONbits.SCS = 1;
@@ -83,20 +83,19 @@ void setup (void){
     /////////Banderas e interrupciones
     INTCONbits.T0IF = 0; //interrupcion del tmr0
     INTCONbits.T0IE = 1;///interrupcion del tmr0
-    INTCONbits.PEIE = 1;/// INTERRUPCIONES DE PUERTO
-    PIE1bits.ADIE = 1; ///interrupcion del adc
-    PIR1bits.ADIF = 0; //FLAG DEL ADC EN 0
     INTCONbits.GIE = 1; //globales
     
+    ////CONFIGURACION DE ADC
+    ANSEL = 0b01;
+    TRISA = 0b01;
+    ADCON0bits.ADCS = 0b10 ; ///fosc/32 
+    ADCON0bits.CHS = 0; ///chs 0000 an0 selecciona canal
+    __delay_ms(1); 
     
     ///////CONFIGURACIN DEL ADC
     ADCON1bits.ADFM = 0; ///justificado a la izquuierda
     ADCON1bits.VCFG0 = 0; //vdd como referenias
     ADCON1bits.VCFG1 = 0; //vss como referencias
-    
-    ADCON0bits.ADCS = 0b10 ; ///fosc/32 
-    ADCON0bits.CHS = 0b0000; ///chs 0000 an0 selecciona canal
-    
     ADCON0bits.ADON = 1; //inicial el adc
-    
+    ADIF = 0 ; //LIMPIAR LA BANDERA
 }
