@@ -2652,27 +2652,99 @@ extern __bank0 __bit __timeout;
 
 # 1 "C:\\Program Files\\Microchip\\xc8\\v2.40\\pic\\include\\c90\\stdint.h" 1 3
 # 25 "newmain.c" 2
-# 36 "newmain.c"
-void __attribute__((picinterrupt(("")))) isr(void) {
-    if (T0IF){
-        PORTC++;
-        TMR0 = 216;
-        T0IF = 0 ;
-    }
-    if (ADIF) {
-        if (ADCON0bits.CHS == 0b0000) {
-            PORTD = ADRESH;
-            ADCON0bits.CHS = 0b0001;
-        } else if (ADCON0bits.CHS == 0b0001){
-            PORTB = ADRESH;
-            ADCON0bits.CHS = 0b0000;
-        }
-        ADIF = 0;
-    }
-}
+
+
+
+
+
+int ADC_display;
+int voltage;
+
+uint8_t centenas;
+uint8_t decenas;
+uint8_t unidades;
+uint8_t residuo;
+
+uint8_t bandera = 0;
+uint8_t display[3];
+
+
+
+uint8_t TABLA[16] = {0b00111111,
+                     0b00000110,
+                     0b01011011,
+                     0b01001111,
+                     0b01100110,
+                     0b01101101,
+                     0b01111101,
+                     0b00000111,
+                     0b01111111,
+                     0b01100111,
+                     01110111,
+                     01111100,
+                     00111001,
+                     01011110,
+                     01111001,
+                     01110001
+
+};
+
+
+
+
 
 
 void setup (void);
+void displays(int numeros);
+
+
+void __attribute__((picinterrupt(("")))) isr(void) {
+
+
+
+    if (PIR1bits.ADIF) {
+
+        if (ADCON0bits.CHS == 0b0000){
+            PORTD = ADRESH;
+
+        }
+        else if (ADCON0bits.CHS == 0b0001){
+            ADC_display = ADRESH;
+
+        }
+            PIR1bits.ADIF = 0;
+    }
+
+    if (INTCONbits.T0IF){
+
+
+        PORTE = 0;
+
+        if (bandera == 0){
+            PORTC = display[2];
+            PORTE = 1;
+            bandera = 1;
+
+        }
+        else if (bandera == 1){
+            PORTC = display[1];
+            PORTE = 2;
+            bandera = 2;
+        }
+        else if (bandera == 2){
+            PORTC = display[0];
+            PORTE = 4;
+            bandera = 0;
+        }
+        TMR0 = 216;
+        INTCONbits.T0IF = 0;
+
+    }
+    return;
+
+}
+
+
 
 void main(void) {
     setup();
@@ -2682,25 +2754,47 @@ void main(void) {
 
 
 
-        _delay((unsigned long)((10)*(8000000/4000.0)));
 
+        voltage = (int)(ADC_display*((float)5/255*(100)));
+        displays(voltage);
 
+        display[0] = TABLA[unidades];
+        display[1] = TABLA[decenas];
+        display[2] = TABLA[centenas];
+
+    if (ADCON0bits.GO == 0){
+        if (ADCON0bits.CHS == 0b0000)
+            ADCON0bits.CHS = 0b0001;
+        else
+            ADCON0bits.CHS = 0b0000;
+           _delay((unsigned long)((100)*(8000000/4000000.0)));
     }
+
+
+
+        }
+
     return;
 }
 
 
 void setup (void){
-    ANSEL = 0;
+    ANSEL = 0b00000011;
+
     ANSELH = 0;
+
+    TRISA = 0b00000011;
     TRISB = 0;
     TRISC = 0;
     TRISD = 0;
+    TRISE = 0;
+
 
     PORTA = 0;
     PORTB = 0;
     PORTC = 0;
     PORTD = 0;
+    PORTE = 0;
 
     OSCCONbits.IRCF = 0b111 ;
     OSCCONbits.SCS = 1;
@@ -2717,13 +2811,13 @@ void setup (void){
 
     INTCONbits.T0IF = 0;
     INTCONbits.T0IE = 1;
+    INTCONbits.GIE = 1;
     INTCONbits.PEIE = 1;
     PIE1bits.ADIE = 1;
     PIR1bits.ADIF = 0;
-    INTCONbits.GIE = 1;
 
 
-    ANSEL = 0b11;
+
     ADCON0bits.ADCS = 0b10 ;
     ADCON0bits.CHS = 0b0000;
 
@@ -2736,4 +2830,19 @@ void setup (void){
     ADCON0bits.ADON = 1;
     _delay((unsigned long)((100)*(8000000/4000000.0)));
     ADIF = 0 ;
+}
+
+
+void displays (int numeros){
+    centenas = (uint8_t)(numeros/100);
+    residuo = numeros%100;
+
+    decenas = residuo/10;
+    residuo = residuo%10;
+
+    unidades = residuo;
+
+    return;
+
+
 }
