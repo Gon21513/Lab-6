@@ -2657,6 +2657,8 @@ extern __bank0 __bit __timeout;
 
 
 
+
+
 int ADC_display;
 int voltage;
 
@@ -2720,6 +2722,8 @@ void __attribute__((picinterrupt(("")))) isr(void) {
 
         PORTE = 0;
 
+
+
         if (bandera == 0){
             PORTC = display[2];
             PORTE = 1;
@@ -2747,9 +2751,13 @@ void __attribute__((picinterrupt(("")))) isr(void) {
 
 
 void main(void) {
+    TRISC = 0x00;
+    PORTC = 0x7F;
     setup();
 
     while(1) {
+        PORTC |= (1 << 7);
+
         ADCON0bits.GO = 1;
 
 
@@ -2758,9 +2766,13 @@ void main(void) {
         voltage = (int)(ADC_display*((float)5/255*(100)));
         displays(voltage);
 
+
+
         display[0] = TABLA[unidades];
         display[1] = TABLA[decenas];
         display[2] = TABLA[centenas];
+        PORTC &= ~(1 << 7);
+
 
     if (ADCON0bits.GO == 0){
         if (ADCON0bits.CHS == 0b0000)
@@ -2834,11 +2846,18 @@ void setup (void){
 
 
 void displays (int numeros){
+
     centenas = (uint8_t)(numeros/100);
+
+
     residuo = numeros%100;
 
+
     decenas = residuo/10;
+
+
     residuo = residuo%10;
+
 
     unidades = residuo;
 

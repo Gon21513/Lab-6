@@ -24,7 +24,9 @@
 #include <xc.h>
 #include <stdint.h>
 
-
+#define DISP_PORT   PORTC       // Puerto del display
+#define DISP_DDR    TRISC       // DDR del display
+#define DP_PIN      7           // Pin del punto decimal
 #define _XTAL_FREQ 8000000
 
 int ADC_display;
@@ -119,9 +121,14 @@ void __interrupt() isr(void) {
 
 ////////////////////principal
 void main(void) {
+    DISP_DDR = 0x00;    // Configurar como salida
+    DISP_PORT = 0x7F;   // Encender todos los segmentos
     setup();// llama  a la funcion setup
 
     while(1) {
+        //enciende el punto decimal
+        DISP_PORT |= (1 << DP_PIN);
+
         ADCON0bits.GO = 1;/// incicia la conversacion analogia a dig
         //while (ADIF == 0);//espera que termine y revisa la bandera
         //int adc = ADRESH;//(ADRESH <<8) + ADRESL;
@@ -136,6 +143,8 @@ void main(void) {
         display[1] = TABLA[decenas];
         display[2] = TABLA[centenas];
         
+        ///apagar [unto deciaml]
+        DISP_PORT &= ~(1 << DP_PIN);
      // Verifica si la conversión ADC ha finalizado
     
     if (ADCON0bits.GO == 0){

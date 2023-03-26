@@ -9,12 +9,12 @@
 ### Memory Usage ###
  Intel Hex-file ranges:
   0h - 5h		(dist/default/production\fisico6.X.production.hex)
-  8h - E41h		(dist/default/production\fisico6.X.production.hex)
+  8h - E59h		(dist/default/production\fisico6.X.production.hex)
   4000h - 4007h		(dist/default/production\fisico6.X.production.hex)
   400Eh - 4011h		(dist/default/production\fisico6.X.production.hex)
  Unused ranges:
   6h - 7h
-  E42h - 3FFFh
+  E5Ah - 3FFFh
   4008h - 400Dh
 
 ### Hex Memory Map ###
@@ -252,7 +252,8 @@
 00000E10 | H1 H1 H1 H1 H1 H1 H1 H1 H1 H1 H1 H1 H1 H1 H1 H1
 00000E20 | H1 H1 H1 H1 H1 H1 H1 H1 H1 H1 H1 H1 H1 H1 H1 H1
 00000E30 | H1 H1 H1 H1 H1 H1 H1 H1 H1 H1 H1 H1 H1 H1 H1 H1
-00000E40 | H1 H1 -- -- -- -- -- -- -- -- -- -- -- -- -- --
+00000E40 | H1 H1 H1 H1 H1 H1 H1 H1 H1 H1 H1 H1 H1 H1 H1 H1
+00000E50 | H1 H1 H1 H1 H1 H1 H1 H1 H1 H1 -- -- -- -- -- --
 ----------------------------------------------------------
 00004000 | H1 H1 H1 H1 H1 H1 H1 H1 -- -- -- -- -- -- H1 H1
 00004010 | H1 H1 -- -- -- -- -- -- -- -- -- -- -- -- -- --
